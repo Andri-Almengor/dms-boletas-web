@@ -1,11 +1,12 @@
 import { NavLink } from 'react-router-dom';
-import { Boxes, Building2, ClipboardList, Home, Settings, Tag, Users } from 'lucide-react';
+import { Boxes, Building2, ClipboardList, Home, Send, Settings, Tag, Users } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext.jsx';
 import { hasPermission, PERMISSIONS } from '../utils/authNormalize.js';
 
 const nav = [
   { to: '/dashboard', label: 'Dashboard', icon: Home },
   { to: '/boletas', label: 'Boletas', icon: ClipboardList, permission: PERMISSIONS.BOLETAS_VIEW },
+  { to: '/operaciones', label: 'Operaciones', icon: Send, permission: PERMISSIONS.BOLETAS_VIEW },
   { to: '/clientes', label: 'Clientes', icon: Building2, permission: PERMISSIONS.CLIENTES_VIEW },
 ];
 
