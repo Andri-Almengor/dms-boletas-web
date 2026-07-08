@@ -66,16 +66,16 @@ const ROLE_DEFAULT_PERMISSIONS = {
 
 export function normalizeUser(rawUser = {}) {
   const user = unwrapUser(rawUser);
-  const roleRaw = pickFirst(user, ROLE_FIELD_CANDIDATES) || findRoleDeep(rawUser) || '';
+  const roleRaw = pickFirst(user, ROLE_FIELD_CANDIDATES) || getPositionalRole(user) || findRoleDeep(rawUser) || '';
   const normalizedRole = normalizeRole(roleRaw);
   const explicitPermissions = normalizePermissions(pickFirst(user, PERMISSION_FIELD_CANDIDATES));
   const fallbackPermissions = ROLE_DEFAULT_PERMISSIONS[normalizedRole] || [];
 
   return {
-    id: user.UsuarioID || user.UserID || user.ID || user.id || user.RowID || user.rowId || user.RowId || '',
-    username: user.Usuario || user.Username || user.username || user.NombreUsuario || user.nombreUsuario || user.User || user.user || '',
-    name: user.Nombre || user.name || user.NombreCompleto || user.nombreCompleto || user.username || user.Usuario || user.Correo || 'Usuario',
-    email: user.Correo || user.Email || user.email || user.Mail || user.mail || '',
+    id: user.UsuarioID || user.UserID || user.ID || user.id || user.RowID || user.rowId || user.RowId || user[0] || user.Col1 || user.col1 || '',
+    username: user.Usuario || user.Username || user.username || user.NombreUsuario || user.nombreUsuario || user.User || user.user || user[1] || user.Col2 || user.col2 || '',
+    name: user.Nombre || user.name || user.NombreCompleto || user.nombreCompleto || user[1] || user.Col2 || user.col2 || user.username || user.Usuario || user.Correo || 'Usuario',
+    email: user.Correo || user.Email || user.email || user.Mail || user.mail || user[3] || user.Col4 || user.col4 || '',
     role: normalizedRole,
     rawRole: roleRaw,
     mustChangePassword: normalizeBoolean(
@@ -84,7 +84,10 @@ export function normalizeUser(rawUser = {}) {
         user.MustChangePassword ??
         user.mustChangePassword ??
         user.CambiarPassword ??
-        user.cambiarPassword
+        user.cambiarPassword ??
+        user[6] ??
+        user.Col7 ??
+        user.col7
     ),
     permissions: unique([...fallbackPermissions, ...explicitPermissions.map(normalizePermissionName)]),
     raw: user,
@@ -94,9 +97,9 @@ export function normalizeUser(rawUser = {}) {
 export function normalizeRole(role) {
   const value = String(role || '').trim().toLowerCase();
 
-  if (['admin', 'administrador', 'administrator', 'administración', 'administracion'].includes(value)) return 'Administrador';
-  if (['tecnico', 'técnico', 'technical', 'technician', 'soporte', 'mesa de ayuda'].includes(value)) return 'Técnico';
-  if (['supervisor', 'coordinador', 'coordinator'].includes(value)) return 'Supervisor';
+  if (['admin', 'administrador', 'administrator', 'administración', 'administracion', 'rol_admin', 'role_admin'].includes(value)) return 'Administrador';
+  if (['tecnico', 'técnico', 'technical', 'technician', 'soporte', 'mesa de ayuda', 'rol_tecnico', 'rol_técnico'].includes(value)) return 'Técnico';
+  if (['supervisor', 'coordinador', 'coordinator', 'rol_supervisor'].includes(value)) return 'Supervisor';
 
   return role ? String(role).trim() : 'Sin rol';
 }
@@ -131,7 +134,38 @@ function unwrapUser(rawUser = {}) {
     rawUser,
   ];
 
-  return candidates.find((candidate) => candidate && typeof candidate === 'object' && !Array.isArray(candidate)) || {};
+  const candidate = candidates.find((item) => item && typeof item === 'object');
+  if (Array.isArray(candidate)) return sheetRowToUser(candidate);
+  return candidate || {};
+}
+
+function sheetRowToUser(row = []) {
+  return {
+    0: row[0],
+    1: row[1],
+    2: row[2],
+    3: row[3],
+    4: row[4],
+    5: row[5],
+    6: row[6],
+    7: row[7],
+    8: row[8],
+    9: row[9],
+    10: row[10],
+    UsuarioID: row[0] || '',
+    Nombre: row[1] || '',
+    Rol: row[2] || row[7] || '',
+    Correo: row[3] || '',
+    DebeCambiarPassword: row[6] || false,
+    RolID: row[7] || '',
+    Activo: row[8] || true,
+    FechaCreacion: row[9] || '',
+    FechaActualizacion: row[10] || '',
+  };
+}
+
+function getPositionalRole(user = {}) {
+  return user[2] || user.Col3 || user.col3 || user.C || user.RolID || user[7] || user.Col8 || user.col8 || '';
 }
 
 function pickFirst(source = {}, keys = []) {
@@ -151,6 +185,7 @@ function pickFirst(source = {}, keys = []) {
 function findRoleDeep(value, depth = 0) {
   if (!value || depth > 5 || typeof value !== 'object') return '';
   if (Array.isArray(value)) {
+    if (looksLikeSheetUserRow(value)) return value[2] || value[7] || '';
     for (const item of value) {
       const found = findRoleDeep(item, depth + 1);
       if (found) return found;
@@ -158,7 +193,7 @@ function findRoleDeep(value, depth = 0) {
     return '';
   }
 
-  const direct = pickFirst(value, ROLE_FIELD_CANDIDATES);
+  const direct = pickFirst(value, ROLE_FIELD_CANDIDATES) || getPositionalRole(value);
   if (direct) return direct;
 
   for (const item of Object.values(value)) {
@@ -167,6 +202,10 @@ function findRoleDeep(value, depth = 0) {
   }
 
   return '';
+}
+
+function looksLikeSheetUserRow(value) {
+  return Array.isArray(value) && value.length >= 4 && String(value[0] || '').startsWith('USR_');
 }
 
 function normalizePermissions(value) {
