@@ -18,18 +18,11 @@ También puede leer por `GET` usando `?action=...`.
 ## Autenticación
 
 ### `login`
-Debe devolver un usuario con rol. El normalizador ya soporta estas variantes:
+Debe devolver un usuario con rol. El normalizador soporta campos nombrados y filas posicionales de Sheet.
 
-- `Rol`
-- `rol`
-- `Role`
-- `role`
-- `Perfil`
-- `perfil`
-- `Cargo`
-- `cargo`
-- `TipoUsuario`
-- `tipoUsuario`
+Fila posicional soportada:
+
+`UsuarioID | Nombre | Rol | Correo | PasswordHash | Salt | DebeCambiarPassword | RolID | Activo | FechaCreacion | FechaActualizacion`
 
 Respuesta sugerida:
 
@@ -38,15 +31,105 @@ Respuesta sugerida:
   "ok": true,
   "sessionToken": "...",
   "user": {
-    "UsuarioID": "USR-001",
-    "Nombre": "Andrick Almengor",
+    "UsuarioID": "USR_ADMIN",
+    "Nombre": "Andrick",
     "Correo": "andrick.almengor@solutionsdms.com",
-    "Rol": "Administrador",
+    "Rol": "admin",
     "DebeCambiarPassword": false,
     "Permisos": "boletas.view,boletas.create,boletas.edit"
   }
 }
 ```
+
+## Usuarios y permisos
+
+### `getUsers`
+Devuelve usuarios registrados.
+
+```json
+{
+  "ok": true,
+  "users": []
+}
+```
+
+### `saveUser`
+Recibe `data.user` y debe crear o actualizar según `UsuarioID`.
+
+Campos esperados:
+
+- `UsuarioID`
+- `Nombre`
+- `Usuario`
+- `Correo`
+- `Rol`
+- `PasswordTemporal`
+- `DebeCambiarPassword`
+- `Activo`
+- `Permisos`
+
+### `resetUserPassword`
+Recibe `UsuarioID`. Debe poner contraseña temporal y `DebeCambiarPassword = TRUE`.
+
+### `toggleUserActive`
+Recibe `UsuarioID` y `Activo`.
+
+## Catálogos administrativos
+
+### `getAdminCatalogs`
+Devuelve:
+
+```json
+{
+  "ok": true,
+  "catalogs": {
+    "tipos": [],
+    "fabricantes": [],
+    "modelos": [],
+    "preguntas": [],
+    "categorias": []
+  }
+}
+```
+
+### `saveCatalogItem`
+Recibe:
+
+```json
+{
+  "catalog": "tipos | fabricantes | modelos | preguntas | categorias",
+  "item": {}
+}
+```
+
+### `deleteCatalogItem`
+Recibe `catalog` e `itemId`.
+
+## Configuración
+
+### `getConfig`
+Devuelve:
+
+```json
+{
+  "ok": true,
+  "config": {
+    "correosCC": "yehuda.karmona@solutionsdms.com, raul.mayorga@solutionsdms.com, alejandra.umana@solutionsdms.com",
+    "correoPruebas": "andrick.almengor@solutionsdms.com",
+    "chatProduccion": "",
+    "chatPruebas": "",
+    "modoPruebas": false,
+    "templateBoletaId": "",
+    "carpetaRaizDriveId": ""
+  }
+}
+```
+
+### `saveConfig`
+Recibe `data.config`.
+
+### `testConfigChannel`
+Recibe `channel`: `chatProduccion`, `chatPruebas` o `correoPruebas`.
 
 ## Boletas
 
@@ -108,16 +191,6 @@ Envía correo con PDF, links de Drive e informe técnico. Recibe:
 }
 ```
 
-Correos CC deben salir de Configuración:
-
-- yehuda.karmona@solutionsdms.com
-- raul.mayorga@solutionsdms.com
-- alejandra.umana@solutionsdms.com
-
-Modo prueba debe enviar solo a:
-
-- andrick.almengor@solutionsdms.com
-
 ### `sendBoletaChat`
 Publica resumen al webhook de cliente o configuración.
 
@@ -159,8 +232,6 @@ Recibe encabezado y evidencias.
 Finaliza mantenimiento y dispara generación/envío si aplica.
 
 ## Permisos frontend
-
-Permisos soportados:
 
 - `boletas.view`
 - `boletas.create`
