@@ -6,6 +6,7 @@ import App from './app/App.jsx';
 import { AuthProvider } from './auth/AuthContext.jsx';
 import { ErrorBoundary } from './components/common/ErrorBoundary.jsx';
 import './styles/global.css';
+import './styles/operations.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {
