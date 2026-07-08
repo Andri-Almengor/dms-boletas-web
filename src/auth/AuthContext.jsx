@@ -11,7 +11,7 @@ export function AuthProvider({ children }) {
   const navigate = useNavigate();
 
   const user = session?.user || null;
-  const sessionToken = session?.sessionToken || session?.token || '';
+  const sessionToken = session?.sessionToken || session?.token || session?.session?.token || '';
 
   async function login(username, password) {
     const response = await loginRequest(username, password);
@@ -20,19 +20,20 @@ export function AuthProvider({ children }) {
       throw new Error(response.error || response.message || 'No se pudo iniciar sesión.');
     }
 
-    const token =
-      response.sessionToken ||
-      response.token ||
-      response.data?.sessionToken ||
-      response.data?.token ||
-      '';
+    const token = extractSessionToken(response);
+    const normalizedUser = normalizeUser(response.user || response.usuario || response.data?.user || response.data?.usuario || response);
 
-    const normalizedUser = normalizeUser(response.user || response.data?.user || response);
+    if (!token) {
+      console.error('Respuesta de login sin token de sesión:', response);
+      throw new Error('El backend no devolvió el token de sesión. Revisa la respuesta del endpoint login.');
+    }
 
     const nextSession = {
       sessionToken: token,
+      token,
       user: normalizedUser,
       createdAt: new Date().toISOString(),
+      raw: response,
     };
 
     saveSession(nextSession);
@@ -82,4 +83,66 @@ export function useAuth() {
   const value = useContext(AuthContext);
   if (!value) throw new Error('useAuth debe usarse dentro de AuthProvider.');
   return value;
+}
+
+function extractSessionToken(response) {
+  const direct =
+    response.sessionToken ||
+    response.SessionToken ||
+    response.token ||
+    response.Token ||
+    response.sessionId ||
+    response.SessionID ||
+    response.data?.sessionToken ||
+    response.data?.SessionToken ||
+    response.data?.token ||
+    response.data?.Token ||
+    response.data?.sessionId ||
+    response.data?.SessionID ||
+    response.session?.token ||
+    response.session?.Token ||
+    response.session?.sessionToken ||
+    response.session?.SessionToken ||
+    response.data?.session?.token ||
+    response.data?.session?.Token ||
+    response.data?.session?.sessionToken ||
+    response.data?.session?.SessionToken ||
+    '';
+
+  if (direct) return String(direct);
+
+  return findTokenDeep(response);
+}
+
+function findTokenDeep(value, depth = 0) {
+  if (!value || depth > 4) return '';
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = findTokenDeep(item, depth + 1);
+      if (found) return found;
+    }
+    return '';
+  }
+
+  if (typeof value !== 'object') return '';
+
+  for (const [key, item] of Object.entries(value)) {
+    const normalizedKey = key.toLowerCase();
+    const looksLikeToken =
+      normalizedKey === 'token' ||
+      normalizedKey === 'sessiontoken' ||
+      normalizedKey === 'session_token' ||
+      normalizedKey === 'sessionid' ||
+      normalizedKey === 'session_id';
+
+    if (looksLikeToken && typeof item === 'string' && item.trim()) {
+      return item.trim();
+    }
+
+    const found = findTokenDeep(item, depth + 1);
+    if (found) return found;
+  }
+
+  return '';
 }
