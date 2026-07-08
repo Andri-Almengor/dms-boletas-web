@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">DMS Boletas</title>
+  <rect width="512" height="512" rx="116" fill="#2f56df"/>
+  <path d="M144 124h146c43 0 78 35 78 78v108c0 43-35 78-78 78H144V124Z" fill="#fff" opacity=".96"/>
+  <path d="M190 178h86c22 0 40 18 40 40s-18 40-40 40h-86v-80Z" fill="#2f56df" opacity=".95"/>
+  <path d="M190 286h106c15 0 28 13 28 28s-13 28-28 28H190v-56Z" fill="#2f56df" opacity=".95"/>
+  <path d="M112 124h60v264h-60z" fill="#dbeafe"/>
+</svg>
