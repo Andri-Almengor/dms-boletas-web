@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { ProtectedRoute } from '../routes/ProtectedRoute.jsx';
+import { PermissionRoute } from '../routes/PermissionRoute.jsx';
 import { AppLayout } from '../layouts/AppLayout.jsx';
 import LoginPage from '../pages/auth/LoginPage.jsx';
 import ChangePasswordPage from '../pages/auth/ChangePasswordPage.jsx';
@@ -13,6 +14,7 @@ import CategoriesAdminPage from '../pages/admin/CategoriesAdminPage.jsx';
 import CatalogsAdminPage from '../pages/admin/CatalogsAdminPage.jsx';
 import ConfigAdminPage from '../pages/admin/ConfigAdminPage.jsx';
 import NotFoundPage from '../pages/NotFoundPage.jsx';
+import { PERMISSIONS } from '../utils/authNormalize.js';
 
 export default function App() {
   return (
@@ -24,15 +26,31 @@ export default function App() {
         <Route element={<AppLayout />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/boletas" element={<BoletasPage />} />
-          <Route path="/clientes" element={<ClientesPage />} />
 
-          <Route path="/admin" element={<AdminPage />} />
-          <Route path="/admin/usuarios" element={<UsersAdminPage />} />
-          <Route path="/admin/clientes" element={<ClientsAdminPage />} />
-          <Route path="/admin/categorias" element={<CategoriesAdminPage />} />
-          <Route path="/admin/catalogos" element={<CatalogsAdminPage />} />
-          <Route path="/admin/configuracion" element={<ConfigAdminPage />} />
+          <Route element={<PermissionRoute permissions={[PERMISSIONS.BOLETAS_VIEW]} />}>
+            <Route path="/boletas" element={<BoletasPage />} />
+          </Route>
+
+          <Route element={<PermissionRoute permissions={[PERMISSIONS.CLIENTES_VIEW]} />}>
+            <Route path="/clientes" element={<ClientesPage />} />
+          </Route>
+
+          <Route element={<PermissionRoute permissions={[PERMISSIONS.ADMIN_VIEW]} />}>
+            <Route path="/admin" element={<AdminPage />} />
+          </Route>
+          <Route element={<PermissionRoute permissions={[PERMISSIONS.USERS_MANAGE]} />}>
+            <Route path="/admin/usuarios" element={<UsersAdminPage />} />
+          </Route>
+          <Route element={<PermissionRoute permissions={[PERMISSIONS.CLIENTES_EDIT]} />}>
+            <Route path="/admin/clientes" element={<ClientsAdminPage />} />
+          </Route>
+          <Route element={<PermissionRoute permissions={[PERMISSIONS.CATALOGS_MANAGE]} />}>
+            <Route path="/admin/categorias" element={<CategoriesAdminPage />} />
+            <Route path="/admin/catalogos" element={<CatalogsAdminPage />} />
+          </Route>
+          <Route element={<PermissionRoute permissions={[PERMISSIONS.CONFIG_MANAGE]} />}>
+            <Route path="/admin/configuracion" element={<ConfigAdminPage />} />
+          </Route>
         </Route>
       </Route>
 
