@@ -87,6 +87,39 @@ export async function saveBoletaSignature(sessionToken, boletaId, signatureDataU
   return response.firma || response.data || response;
 }
 
+export async function generateBoletaPdf(sessionToken, boletaId) {
+  return runBoletaAction(sessionToken, 'generateBoletaPdf', boletaId, 'No se pudo generar el PDF.');
+}
+
+export async function sendBoletaEmail(sessionToken, boletaId, options = {}) {
+  return runBoletaAction(sessionToken, 'sendBoletaEmail', boletaId, 'No se pudo enviar el correo.', options);
+}
+
+export async function sendBoletaChat(sessionToken, boletaId, options = {}) {
+  return runBoletaAction(sessionToken, 'sendBoletaChat', boletaId, 'No se pudo enviar el mensaje de Google Chat.', options);
+}
+
+export async function finalizeBoleta(sessionToken, boletaId, options = {}) {
+  return runBoletaAction(sessionToken, 'finalizeBoleta', boletaId, 'No se pudo finalizar la boleta.', options);
+}
+
+export async function sendBoletaTest(sessionToken, boletaId, channel = 'chat') {
+  return runBoletaAction(sessionToken, 'sendBoletaTest', boletaId, 'No se pudo enviar la prueba.', { channel, modoPrueba: true });
+}
+
+async function runBoletaAction(sessionToken, action, boletaId, fallbackError, extra = {}) {
+  const response = await apiPost(action, {
+    sessionToken,
+    token: sessionToken,
+    BoletaID: boletaId,
+    boletaId,
+    ...extra,
+  });
+
+  if (response.ok === false) throw new Error(response.error || fallbackError);
+  return response.boleta ? normalizeBoleta(response.boleta) : response;
+}
+
 export async function fileToDataUrl(file) {
   if (!file) return '';
   return new Promise((resolve, reject) => {
