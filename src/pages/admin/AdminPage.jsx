@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom';
-import { Building2, Settings, Tag, Users } from 'lucide-react';
+import { Building2, Boxes, Settings, Tag, Users } from 'lucide-react';
 
 const items = [
   { to: '/admin/usuarios', title: 'Usuarios', text: 'Crear usuarios, roles y permisos.', icon: Users },
   { to: '/admin/clientes', title: 'Clientes', text: 'Administrar clientes, contactos, chats y notas.', icon: Building2 },
   { to: '/admin/categorias', title: 'Categorías', text: 'Administrar categorías de boletas.', icon: Tag },
+  { to: '/admin/catalogos', title: 'Catálogos', text: 'Tipos de dispositivo, fabricantes, modelos y preguntas.', icon: Boxes },
   { to: '/admin/configuracion', title: 'Configuración', text: 'Correos CC, Chat, modo prueba y Drive.', icon: Settings },
 ];
 
