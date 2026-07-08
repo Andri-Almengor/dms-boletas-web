@@ -1,19 +1,18 @@
-# DMS Boletas Web - Fase 2
+# DMS Boletas Web - Fase 3
 
-Esta versión incluye:
+Esta versión agrega la base del módulo de catálogos y corrige el problema de `React is not defined`.
 
-- Corrección de rol mostrado en pantalla.
-- ErrorBoundary para evitar pantalla blanca.
-- Login y cambio de contraseña.
-- Rutas protegidas.
-- Layout principal.
-- Dashboard inicial.
-- Panel Administración inicial.
-- Usuarios.
-- Clientes.
-- Categorías.
-- Configuración.
-- Permisos por módulo preparados para backend.
+## Incluye
+
+- Corrección del ErrorBoundary para no depender de `React` como variable global.
+- Panel de administración de catálogos.
+- Tipos de dispositivo.
+- Fabricantes.
+- Modelos asociados a tipo de dispositivo y fabricante.
+- Imagen de referencia por modelo.
+- Preguntas dinámicas por tipo de dispositivo.
+- Estilos para pestañas y tablas administrativas.
+- Rutas y menú lateral para Catálogos.
 
 ## Instalar
 
@@ -32,4 +31,4 @@ src/services/apiClient.js
 
 ## Nota
 
-Si cambias Apps Script, recuerda publicar una nueva versión de la Web App.
+En esta fase el panel de catálogos ya deja definida la experiencia visual. En la siguiente iteración conectamos cada formulario con los endpoints reales del Apps Script y las hojas actuales.
