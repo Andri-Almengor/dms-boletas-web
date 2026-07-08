@@ -8,6 +8,7 @@ import DashboardPage from '../pages/dashboard/DashboardPage.jsx';
 import BoletasPage from '../pages/boletas/BoletasPage.jsx';
 import ClientesPage from '../pages/clientes/ClientesPage.jsx';
 import OperacionesPage from '../pages/operaciones/OperacionesPage.jsx';
+import MantenimientosPage from '../pages/mantenimientos/MantenimientosPage.jsx';
 import AdminPage from '../pages/admin/AdminPage.jsx';
 import UsersAdminPage from '../pages/admin/UsersAdminPage.jsx';
 import ClientsAdminPage from '../pages/admin/ClientsAdminPage.jsx';
@@ -35,6 +36,10 @@ export default function App() {
 
           <Route element={<PermissionRoute permissions={[PERMISSIONS.CLIENTES_VIEW]} />}>
             <Route path="/clientes" element={<ClientesPage />} />
+          </Route>
+
+          <Route element={<PermissionRoute permissions={[PERMISSIONS.MAINTENANCE_VIEW]} />}>
+            <Route path="/mantenimientos" element={<MantenimientosPage />} />
           </Route>
 
           <Route element={<PermissionRoute permissions={[PERMISSIONS.ADMIN_VIEW]} />}>
