@@ -1,0 +1,19 @@
+{
+  "name": "DMS Boletas",
+  "short_name": "DMS Boletas",
+  "description": "Sistema web empresarial para gestión de boletas técnicas DMS.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#eef3fb",
+  "theme_color": "#2f56df",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/pwa-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
