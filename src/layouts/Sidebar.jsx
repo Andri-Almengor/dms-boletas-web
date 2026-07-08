@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { ClipboardList, Home, Settings, Users, Building2, Tag } from 'lucide-react';
+import { ClipboardList, Home, Settings, Users, Building2, Tag, Boxes } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext.jsx';
 import { isAdmin } from '../utils/authNormalize.js';
 
@@ -14,6 +14,7 @@ const adminNav = [
   { to: '/admin/usuarios', label: 'Usuarios', icon: Users },
   { to: '/admin/clientes', label: 'Admin clientes', icon: Building2 },
   { to: '/admin/categorias', label: 'Categorías', icon: Tag },
+  { to: '/admin/catalogos', label: 'Catálogos', icon: Boxes },
   { to: '/admin/configuracion', label: 'Configuración', icon: Settings },
 ];
 
