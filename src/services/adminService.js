@@ -5,25 +5,46 @@ export async function getAdminBootstrap(sessionToken) {
 }
 
 export async function fetchUsers(sessionToken) {
-  const response = await apiGet('getUsers', { sessionToken, token: sessionToken });
+  const response = await apiGetWithFallback([
+    ['getUsers', { sessionToken, token: sessionToken }],
+    ['listUsers', { sessionToken, token: sessionToken }],
+    ['adminListUsers', { sessionToken, token: sessionToken }],
+  ]);
   const rows = response.users || response.usuarios || response.rows || response.data || [];
   return Array.isArray(rows) ? rows.map(normalizeUserRow) : [];
 }
 
 export async function saveUser(sessionToken, user) {
-  const response = await apiPost('saveUser', { sessionToken, token: sessionToken, user, usuario: user });
+  const isUpdate = Boolean(user.UsuarioID);
+  const payload = { sessionToken, token: sessionToken, user, usuario: user, ...user };
+  const response = await apiPostWithFallback([
+    ['saveUser', payload],
+    [isUpdate ? 'updateUser' : 'createUser', payload],
+    ['adminSaveUser', payload],
+    [isUpdate ? 'adminUpdateUser' : 'adminCreateUser', payload],
+  ]);
   if (response.ok === false) throw new Error(response.error || 'No se pudo guardar el usuario.');
   return normalizeUserRow(response.user || response.usuario || response.row || response.data || response);
 }
 
 export async function resetUserPassword(sessionToken, userId) {
-  const response = await apiPost('resetUserPassword', { sessionToken, token: sessionToken, UsuarioID: userId, userId });
+  const payload = { sessionToken, token: sessionToken, UsuarioID: userId, userId };
+  const response = await apiPostWithFallback([
+    ['resetUserPassword', payload],
+    ['resetPassword', payload],
+    ['adminResetUserPassword', payload],
+  ]);
   if (response.ok === false) throw new Error(response.error || 'No se pudo reiniciar la contraseña.');
   return response;
 }
 
 export async function toggleUserActive(sessionToken, userId, active) {
-  const response = await apiPost('toggleUserActive', { sessionToken, token: sessionToken, UsuarioID: userId, Activo: active });
+  const payload = { sessionToken, token: sessionToken, UsuarioID: userId, userId, Activo: active, active };
+  const response = await apiPostWithFallback([
+    ['toggleUserActive', payload],
+    ['updateUserStatus', payload],
+    ['adminToggleUserActive', payload],
+  ]);
   if (response.ok === false) throw new Error(response.error || 'No se pudo cambiar el estado del usuario.');
   return response;
 }
@@ -41,7 +62,11 @@ export async function updateUser(sessionToken, values) {
 }
 
 export async function fetchAdminCatalogs(sessionToken) {
-  const response = await apiGet('getAdminCatalogs', { sessionToken, token: sessionToken });
+  const response = await apiGetWithFallback([
+    ['getAdminCatalogs', { sessionToken, token: sessionToken }],
+    ['getBoletaCatalogs', { sessionToken, token: sessionToken }],
+    ['adminCatalogs', { sessionToken, token: sessionToken }],
+  ]);
   const data = response.catalogs || response.data || response;
   return {
     tipos: normalizeRows(data.tipos || data.tiposDispositivo || data.deviceTypes || []),
@@ -53,13 +78,23 @@ export async function fetchAdminCatalogs(sessionToken) {
 }
 
 export async function saveCatalogItem(sessionToken, catalog, item) {
-  const response = await apiPost('saveCatalogItem', { sessionToken, token: sessionToken, catalog, item });
+  const payload = { sessionToken, token: sessionToken, catalog, item, Catalogo: catalog, registro: item };
+  const response = await apiPostWithFallback([
+    ['saveCatalogItem', payload],
+    ['saveCatalog', payload],
+    ['adminSaveCatalogItem', payload],
+  ]);
   if (response.ok === false) throw new Error(response.error || 'No se pudo guardar el catálogo.');
   return response.item || response.data || response;
 }
 
 export async function deleteCatalogItem(sessionToken, catalog, itemId) {
-  const response = await apiPost('deleteCatalogItem', { sessionToken, token: sessionToken, catalog, itemId, ID: itemId });
+  const payload = { sessionToken, token: sessionToken, catalog, itemId, ID: itemId, Catalogo: catalog };
+  const response = await apiPostWithFallback([
+    ['deleteCatalogItem', payload],
+    ['deleteCatalog', payload],
+    ['adminDeleteCatalogItem', payload],
+  ]);
   if (response.ok === false) throw new Error(response.error || 'No se pudo eliminar el registro.');
   return response;
 }
@@ -82,7 +117,10 @@ export async function saveCategory(sessionToken, values) {
 }
 
 export async function fetchConfig(sessionToken) {
-  const response = await apiGet('getConfig', { sessionToken, token: sessionToken });
+  const response = await apiGetWithFallback([
+    ['getConfig', { sessionToken, token: sessionToken }],
+    ['adminGetConfig', { sessionToken, token: sessionToken }],
+  ]);
   const data = response.config || response.data || response;
   return {
     correosCC: data.correosCC || data.CorreosCC || 'yehuda.karmona@solutionsdms.com, raul.mayorga@solutionsdms.com, alejandra.umana@solutionsdms.com',
@@ -100,13 +138,22 @@ export async function getConfig(sessionToken) {
 }
 
 export async function saveConfig(sessionToken, config) {
-  const response = await apiPost('saveConfig', { sessionToken, token: sessionToken, config });
+  const payload = { sessionToken, token: sessionToken, config, ...config };
+  const response = await apiPostWithFallback([
+    ['saveConfig', payload],
+    ['adminSaveConfig', payload],
+  ]);
   if (response.ok === false) throw new Error(response.error || 'No se pudo guardar la configuración.');
   return response.config || response.data || response;
 }
 
 export async function testConfigChannel(sessionToken, channel) {
-  const response = await apiPost('testConfigChannel', { sessionToken, token: sessionToken, channel });
+  const payload = { sessionToken, token: sessionToken, channel };
+  const response = await apiPostWithFallback([
+    ['testConfigChannel', payload],
+    ['sendConfigTest', payload],
+    ['adminTestConfigChannel', payload],
+  ]);
   if (response.ok === false) throw new Error(response.error || 'No se pudo enviar la prueba.');
   return response;
 }
@@ -141,6 +188,37 @@ export const ALL_PERMISSIONS = [
   ['catalogs.manage', 'Gestionar catálogos'],
   ['config.manage', 'Gestionar configuración'],
 ];
+
+async function apiPostWithFallback(calls) {
+  const errors = [];
+  for (const [action, payload] of calls) {
+    const response = await apiPost(action, payload);
+    if (isUnsupported(response)) {
+      errors.push(response.error || response.message || action);
+      continue;
+    }
+    return response;
+  }
+  return { ok: false, error: errors.at(-1) || 'Acción no soportada por el backend.' };
+}
+
+async function apiGetWithFallback(calls) {
+  const errors = [];
+  for (const [action, params] of calls) {
+    const response = await apiGet(action, params);
+    if (isUnsupported(response)) {
+      errors.push(response.error || response.message || action);
+      continue;
+    }
+    return response;
+  }
+  return { ok: false, error: errors.at(-1) || 'Acción no soportada por el backend.' };
+}
+
+function isUnsupported(response) {
+  const text = String(response?.error || response?.message || '').toLowerCase();
+  return response?.ok === false && (text.includes('acción no soportada') || text.includes('accion no soportada') || text.includes('unsupported'));
+}
 
 function normalizeUserRow(row = {}) {
   if (Array.isArray(row)) {
