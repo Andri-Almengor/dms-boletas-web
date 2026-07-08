@@ -131,23 +131,136 @@ export async function fileToDataUrl(file) {
 }
 
 function mergeCatalogs(remote = {}) {
+  const categorias = normalizeNameList(remote.categorias || remote.categories || remote.Categorias, 'Categoria');
+  const tiposDispositivo = normalizeNameList(remote.tiposDispositivo || remote.tipos || remote.deviceTypes || remote.TiposDispositivo, 'TipoDispositivo');
+  const fabricantes = normalizeFabricantes(remote.fabricantes || remote.manufacturers || remote.Fabricantes);
+  const modelos = normalizeModelos(remote.modelos || remote.models || remote.Modelos);
+  const clientes = normalizeClientes(remote.clientes || remote.clients || remote.Clientes);
+  const ubicaciones = normalizeUbicaciones(remote.ubicaciones || remote.locations || remote.Ubicaciones);
+  const usuarios = normalizeUsuarios(remote.usuarios || remote.users || remote.Usuarios);
+  const preguntasDinamicas = normalizePreguntas(remote.preguntasDinamicas || remote.preguntas || remote.questions || remote.PreguntasDinamicas);
+
   return {
     ...DEFAULT_CATALOGS,
     ...remote,
-    estados: safeArray(remote.estados, DEFAULT_CATALOGS.estados),
-    categorias: safeArray(remote.categorias, DEFAULT_CATALOGS.categorias),
-    tiposDispositivo: safeArray(remote.tiposDispositivo || remote.tipos, DEFAULT_CATALOGS.tiposDispositivo),
-    fabricantes: safeArray(remote.fabricantes, DEFAULT_CATALOGS.fabricantes),
-    modelos: safeArray(remote.modelos, DEFAULT_CATALOGS.modelos),
-    clientes: safeArray(remote.clientes, DEFAULT_CATALOGS.clientes),
-    ubicaciones: safeArray(remote.ubicaciones, DEFAULT_CATALOGS.ubicaciones),
-    usuarios: safeArray(remote.usuarios, DEFAULT_CATALOGS.usuarios),
-    preguntasDinamicas: remote.preguntasDinamicas || remote.preguntas || DEFAULT_CATALOGS.preguntasDinamicas,
+    estados: normalizeNameList(remote.estados || remote.Estados, null, DEFAULT_CATALOGS.estados),
+    categorias: categorias.length ? categorias : DEFAULT_CATALOGS.categorias,
+    tiposDispositivo: tiposDispositivo.length ? tiposDispositivo : DEFAULT_CATALOGS.tiposDispositivo,
+    fabricantes: fabricantes.length ? fabricantes : DEFAULT_CATALOGS.fabricantes,
+    modelos: modelos.length ? modelos : DEFAULT_CATALOGS.modelos,
+    clientes,
+    ubicaciones,
+    usuarios,
+    preguntasDinamicas: Object.keys(preguntasDinamicas).length ? preguntasDinamicas : DEFAULT_CATALOGS.preguntasDinamicas,
   };
 }
 
-function safeArray(value, fallback) {
-  return Array.isArray(value) ? value : fallback;
+function normalizeNameList(value, nameKey, fallback = []) {
+  if (!Array.isArray(value)) return fallback;
+  return value
+    .map((item) => {
+      if (typeof item === 'string') return item;
+      return item?.nombre || item?.Nombre || item?.name || item?.[nameKey] || item?.Categoria || item?.TipoDispositivo || item?.Fabricante || item?.Modelo || item?.id || '';
+    })
+    .filter(Boolean);
+}
+
+function normalizeFabricantes(value) {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => {
+    if (typeof item === 'string') return { id: item, nombre: item, tipos: [] };
+    return {
+      ...item,
+      id: item.id || item.ID || item.FabricanteID || item.RowID || item.Fabricante || item.nombre || item.Nombre || '',
+      nombre: item.nombre || item.Nombre || item.Fabricante || item.name || '',
+      tipos: normalizeToArray(item.tipos || item.Tipos || item.tipoDispositivo || item.TipoDispositivo || item.TiposDispositivo),
+    };
+  }).filter((item) => item.nombre);
+}
+
+function normalizeModelos(value) {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => {
+    if (typeof item === 'string') return { id: item, nombre: item, modelo: item, fabricante: '', tipoDispositivo: '' };
+    const nombre = item.nombre || item.Nombre || item.modelo || item.Modelo || item.name || '';
+    return {
+      ...item,
+      id: item.id || item.ID || item.ModeloID || item.RowID || nombre,
+      nombre,
+      modelo: nombre,
+      fabricante: item.fabricante || item.Fabricante || item.NombreFabricante || '',
+      tipoDispositivo: item.tipoDispositivo || item.TipoDispositivo || item.tipo || item.Tipo || '',
+      imagenReferencia: item.imagenReferencia || item.ImagenReferencia || item.ImagenReferenciaURL || '',
+    };
+  }).filter((item) => item.nombre);
+}
+
+function normalizeClientes(value) {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => {
+    if (typeof item === 'string') return { ClienteID: item, Cliente: item, Nombre: item };
+    const nombre = item.Nombre || item.nombre || item.Cliente || item.Clientes || item.name || '';
+    return {
+      ...item,
+      ClienteID: item.ClienteID || item.id || item.ID || item.RowID || nombre,
+      Cliente: nombre,
+      Nombre: nombre,
+      CorreoCliente: item.CorreoCliente || item.CorreoPrincipal || item.Correo || item.email || '',
+      ChatWebhookURL: item.ChatWebhookURL || item.ChatURL || item.GoogleChatURL || '',
+    };
+  }).filter((item) => item.Cliente);
+}
+
+function normalizeUbicaciones(value) {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => {
+    if (typeof item === 'string') return { UbicacionID: item, Ubicacion: item, Nombre: item };
+    const nombre = item.Ubicacion || item.Nombre || item.nombre || item.ubicacion || '';
+    return {
+      ...item,
+      UbicacionID: item.UbicacionID || item.id || item.ID || item.RowID || nombre,
+      Ubicacion: nombre,
+      Nombre: nombre,
+      ClienteID: item.ClienteID || item.clienteId || item.Cliente || item.cliente || '',
+    };
+  }).filter((item) => item.Ubicacion);
+}
+
+function normalizeUsuarios(value) {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => {
+    if (typeof item === 'string') return { UsuarioID: item, Nombre: item, Correo: '' };
+    const nombre = item.Nombre || item.name || item.nombre || item.Username || item.Usuario || item.Correo || '';
+    return {
+      ...item,
+      UsuarioID: item.UsuarioID || item.id || item.ID || item.RowID || nombre,
+      Nombre: nombre,
+      Correo: item.Correo || item.email || item.Email || '',
+      Rol: item.Rol || item.role || item.RolID || '',
+      Activo: item.Activo ?? item.activo ?? true,
+    };
+  }).filter((item) => item.Nombre);
+}
+
+function normalizePreguntas(value) {
+  if (!value) return {};
+  if (!Array.isArray(value) && typeof value === 'object') return value;
+  if (!Array.isArray(value)) return {};
+
+  return value.reduce((acc, item) => {
+    const tipo = item.tipoDispositivo || item.TipoDispositivo || item.Tipo || item.tipo || '';
+    const pregunta = item.pregunta || item.Pregunta || item.nombre || item.Nombre || '';
+    if (!tipo || !pregunta) return acc;
+    if (!acc[tipo]) acc[tipo] = [];
+    acc[tipo].push(pregunta);
+    return acc;
+  }, {});
+}
+
+function normalizeToArray(value) {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  return String(value).split(/[,|;]/).map((item) => item.trim()).filter(Boolean);
 }
 
 function normalizeBoleta(item = {}) {
