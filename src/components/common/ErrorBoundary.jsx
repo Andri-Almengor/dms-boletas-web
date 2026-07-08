@@ -1,6 +1,6 @@
-import React from 'react';
+import { Component } from 'react';
 
-export class ErrorBoundary extends React.Component {
+export class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
     this.state = { hasError: false, error: null };
@@ -30,7 +30,7 @@ export class ErrorBoundary extends React.Component {
               Se evitó la pantalla en blanco. Puedes volver al login e iniciar sesión otra vez.
             </p>
             <pre>{String(this.state.error?.message || this.state.error || '')}</pre>
-            <button onClick={this.reset}>Reiniciar aplicación</button>
+            <button className="btn btn-primary" onClick={this.reset}>Reiniciar aplicación</button>
           </div>
         </div>
       );
